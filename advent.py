@@ -1,6 +1,9 @@
 import telebot
-import tokenbot
+import schedule
+import tokenbot 
 from telebot import types
+from time import sleep
+from multiprocessing import Process
 
 bot = telebot.TeleBot(tokenbot.token)
 
@@ -9,7 +12,7 @@ score = 0
 users = {}
 
 
-@bot.message_handler(commands=['start'])
+@bot.message_handler(commands=['start',])
 def start_message(message):
     keyboard = types.InlineKeyboardMarkup()
     cont = types.InlineKeyboardButton(
@@ -19,7 +22,6 @@ def start_message(message):
     bot.send_message(message.chat.id, 'Уже 5-й год я помогаю старшеклассникам готовиться к экзаменам. Средний результат сдачи ЕГЭ по русскому языку у моих учеников 87+, в чём ты можешь убедиться, посмотрев мои соц.сети. А ещё ты сможешь поближе со мной познакомиться и получить много полезного контента:)')
     bot.send_message(
         message.chat.id, 'Inst: @ katty.phil\nVK: https: // vk.com/egeruslitus\nYoutube: https: // www.youtube.com/@egeruslitus', reply_markup=keyboard)
-
 
 @bot.message_handler(content_types=['text', ])
 def start2_message(message):
@@ -35,7 +37,7 @@ def register_message(message):
     msg = bot.reply_to(message, 'Отлично, теперь ты знаешь, что тебя ждёт!\n\nСкажи, пожалуйста, как тебя зовут. Напиши свои имя и фамилю одним сообщением.\n\nНапример:\nИван Иванов')
     bot.register_next_step_handler(msg, get_name)
 
-#@bot.message_handler(content_types=['text', ])
+@bot.message_handler(content_types=['text', ])
 def get_name(message):
     global name
     global users
@@ -44,14 +46,25 @@ def get_name(message):
         text='Жду задания!', callback_data='yes3')
     keyboard.add(cont)
     name = message.text
-    if message.chat.username not in users:
+    if message.chat.username not in users.keys():
         users[message.chat.username] = [name, score]
     bot.reply_to(
-        message, 'Приятно познакомиться!\nЖалаю удачи!\n\nИ помни, если у тебя возникнут какие-либо воросы, ты всегда можешь обратиться ко мне в личные сообщения.\n\nМой тг: @wirsme', reply_markup=keyboard)
+        message, 'Приятно познакомиться!\nЖалаю удачи!\n\nИ помни, если у тебя возникнут какие-либо воросы, ты всегда можешь обратиться ко мне в личные сообщения.\n\nМой тг: @wirsme')
 
-@bot.message_handler(content_types=['text', ])
-def first_day(message):
-    bot.send_message(message.chat.id, 'gviygvikygvi')
+
+def start_process():
+    p1 = Process(target=P_schedule.start_schedule, args=()).start()
+
+class P_schedule():
+    def start_schedule():
+    #   schedule.every().friday.at('22:36').do(P_schedule.first_day())
+
+        while True:
+            schedule.run_pending()
+            sleep(1)
+
+    #def first_day():
+    #    bot.send_message(, 'gviygvikygvi')
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):
@@ -59,8 +72,12 @@ def callback_worker(call):
         start2_message(call.message)
     if call.data == "yes2":
         register_message(call.message)
-    if call.data == "yes3":
-        first_day(call.message)
 
-bot.polling(non_stop=True)
 
+
+if __name__ == '__main__':
+    start_process()
+    try:
+        bot.polling(none_stop=True)
+    except:
+        pass
