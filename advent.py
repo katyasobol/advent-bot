@@ -30,24 +30,28 @@ def start2_message(message):
     bot.send_message(message.chat.id, 'ПРАВИЛА АДВЕНТ КАЛЕНДАРЯ')
     bot.send_message(message.chat.id, '1. Каждый день тебе будет приходить ссылка на небольшое видео с теорией + конспект. За просмотр видео ты получаешь автоматически 5 баллов.\n\n2. После видео тебе необходимо прорешать 3 задания с выбором ответа, за каждое из которых ты можешь заработать 2 балла.\n\n3.Если ты хочешь больше практики, а также получить ещё дополнительные баллы, то тебе будет доступна ссылка на гугл-форму. Там будут дополнительные задания, некоторые с ручной проверкой (например, cочинения). За решение гугл-форм тебе начислятся баллы 30 декбря.\n\n4. Если ты хочешь получить подробный разбор сочинения с рекомендациями, как исправить ошибки и улучшить результат, то внимательно смотри задания в гугл-формах)', reply_markup=keyboard)
 
-
 @bot.message_handler(content_types=['text', ])
 def register_message(message):
-    bot.send_message(
-        message.chat.id, 'Отлично, теперь ты знаешь, что тебя ждёт!\n\nСкажи, пожалуйста, как тебя зовут. Напиши свои имя и фамилю одним сообщением.\n\nНапример:\nИван Иванов')
-    bot.register_next_step_handler(message, get_name)
+    msg = bot.reply_to(message, 'Отлично, теперь ты знаешь, что тебя ждёт!\n\nСкажи, пожалуйста, как тебя зовут. Напиши свои имя и фамилю одним сообщением.\n\nНапример:\nИван Иванов')
+    bot.register_next_step_handler(msg, get_name)
 
-
+#@bot.message_handler(content_types=['text', ])
 def get_name(message):
     global name
     global users
+    keyboard = types.InlineKeyboardMarkup()
+    cont = types.InlineKeyboardButton(
+        text='Жду задания!', callback_data='yes3')
+    keyboard.add(cont)
     name = message.text
-    if message.from_user.username not in users:
+    if message.chat.username not in users:
         users[message.chat.username] = [name, score]
-        bot.send_message(
-            message.chat.id, 'Приятно познакомиться!\nЖалаю удачи!\n\nИ помни, если у тебя возникнут какие-либо воросы, ты всегда можешь обратиться ко мне в личные сообщения.\n\nМой тг: @wirsme')
-    print(users)
+    bot.reply_to(
+        message, 'Приятно познакомиться!\nЖалаю удачи!\n\nИ помни, если у тебя возникнут какие-либо воросы, ты всегда можешь обратиться ко мне в личные сообщения.\n\nМой тг: @wirsme', reply_markup=keyboard)
 
+@bot.message_handler(content_types=['text', ])
+def first_day(message):
+    bot.send_message(message.chat.id, 'gviygvikygvi')
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):
@@ -55,6 +59,8 @@ def callback_worker(call):
         start2_message(call.message)
     if call.data == "yes2":
         register_message(call.message)
+    if call.data == "yes3":
+        first_day(call.message)
 
+bot.polling(non_stop=True)
 
-bot.polling(none_stop=True)
