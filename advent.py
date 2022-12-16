@@ -7,8 +7,6 @@ from multiprocessing import Process
 
 bot = telebot.TeleBot(tokenbot.token)
 
-name = ''
-score = 0
 users = {}
 
 
@@ -39,15 +37,12 @@ def register_message(message):
 
 @bot.message_handler(content_types=['text', ])
 def get_name(message):
-    global name
-    global users
     keyboard = types.InlineKeyboardMarkup()
     cont = types.InlineKeyboardButton(
         text='Жду задания!', callback_data='yes3')
     keyboard.add(cont)
-    name = message.text
     if message.chat.username not in users.keys():
-        users[message.chat.username] = [name, score]
+        users[message.chat.username] = [message.text, 0]
     bot.reply_to(
         message, 'Приятно познакомиться!\nЖалаю удачи!\n\nИ помни, если у тебя возникнут какие-либо воросы, ты всегда можешь обратиться ко мне в личные сообщения.\n\nМой тг: @wirsme')
 
