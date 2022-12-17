@@ -1,13 +1,14 @@
 import telebot
 import schedule
 import tokenbot 
-from telebot import types
-from time import sleep
+import time
+from telebot import types, apihelper
+from sqlalchemy import create_engine, select
 from multiprocessing import Process
+from database import Members
 
 bot = telebot.TeleBot(tokenbot.token)
-
-users = {}
+engine = create_engine('postgresql://postgres:10122000kot@localhost/advent', echo=True)
 
 
 @bot.message_handler(commands=['start',])
@@ -41,8 +42,11 @@ def get_name(message):
     cont = types.InlineKeyboardButton(
         text='Жду задания!', callback_data='yes3')
     keyboard.add(cont)
-    if message.chat.username not in users.keys():
-        users[message.chat.username] = [message.text, 0]
+    current_user = message.chat.username
+    res = engine.execute(f"SELECT COUNT(*) FROM members WHERE username = '{current_user}'").fetchall()[0][0]
+    if res == 0:
+        engine.execute(
+            f'''INSERT INTO members (username, user_id, name, score) VALUES ('{current_user}', '{message.chat.id}', '{message.text}', '{0}');''')
     bot.reply_to(
         message, 'Приятно познакомиться!\nЖалаю удачи!\n\nИ помни, если у тебя возникнут какие-либо воросы, ты всегда можешь обратиться ко мне в личные сообщения.\n\nМой тг: @wirsme')
 
@@ -56,7 +60,7 @@ class P_schedule():
 
         while True:
             schedule.run_pending()
-            sleep(1)
+            time.sleep(1)
 
     #def first_day():
     #    bot.send_message(, 'gviygvikygvi')
