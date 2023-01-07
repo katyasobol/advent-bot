@@ -1,15 +1,22 @@
+import logging
 import telebot
-import schedule
-import tokenbot 
-import time
-from telebot import types, apihelper
-from sqlalchemy import create_engine, select
-from multiprocessing import Process
-from database import Members
+from os import getenv
+from time import sleep
+from telebot import types
+from sqlalchemy import create_engine
+from apscheduler.schedulers.background import BackgroundScheduler
+from dotenv import load_dotenv
+from pathlib import Path
 
-bot = telebot.TeleBot(tokenbot.token)
-engine = create_engine('postgresql://postgres:10122000kot@localhost/advent', echo=True)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
+load_dotenv()
+env_path = Path('.')/'.env'
+load_dotenv(dotenv_path=env_path)
+
+bot = telebot.TeleBot(getenv('TOKEN'))
+engine = create_engine(getenv('DATABASE'), echo=True)
+scheduler = BackgroundScheduler()
 
 @bot.message_handler(commands=['start',])
 def start_message(message):
@@ -50,20 +57,10 @@ def get_name(message):
     bot.reply_to(
         message, 'Приятно познакомиться!\nЖалаю удачи!\n\nИ помни, если у тебя возникнут какие-либо воросы, ты всегда можешь обратиться ко мне в личные сообщения.\n\nМой тг: @wirsme')
 
-
-def start_process():
-    p1 = Process(target=P_schedule.start_schedule, args=()).start()
-
-class P_schedule():
-    def start_schedule():
-    #   schedule.every().friday.at('22:36').do(P_schedule.first_day())
-
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
-
-    #def first_day():
-    #    bot.send_message(, 'gviygvikygvi')
+@bot.message_handler(content_types=['text', ])
+def prompt(message):
+    bot.send_message(message.chat.id, 'gyuk')
+    scheduler.add_job(prompt(message), 'date', run_date='2023-1-07 19:23:00')
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):
@@ -73,10 +70,12 @@ def callback_worker(call):
         register_message(call.message)
 
 
-
 if __name__ == '__main__':
-    start_process()
     try:
         bot.polling(none_stop=True)
+        scheduler.start()
+        print(scheduler.get_jobs())
+        while True:
+            sleep(1)
     except:
         pass

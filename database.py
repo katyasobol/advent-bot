@@ -1,8 +1,15 @@
+from os import getenv
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+from pathlib import Path
 
-engine = create_engine('postgresql://postgres:10122000kot@localhost/advent', echo=True)
+load_dotenv()
+env_path = Path('.')/'.env'
+load_dotenv(dotenv_path=env_path)
+
+engine = create_engine(getenv('DATABASE'), echo=True)
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
