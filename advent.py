@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
 load_dotenv()
 env_path = Path('.')/'.env'
@@ -18,6 +19,7 @@ load_dotenv(dotenv_path=env_path)
 bot = telebot.TeleBot(getenv('TOKEN'))
 engine = create_engine(getenv('DATABASE'), echo=True)
 scheduler = BackgroundScheduler()
+current_user = engine.execute("SELECT user_id FROM members").fetchall()[0][0]
 
 @bot.message_handler(commands=['start',])
 def start_message(message):
@@ -47,16 +49,16 @@ def register_message(message):
 
 @bot.message_handler(content_types=['text', ])
 def get_name(message):
-    keyboard = types.InlineKeyboardMarkup()
-    cont = types.InlineKeyboardButton(text='Жду задания!', callback_data='yes3')
-    keyboard.add(cont)
-    current_user = message.chat.username
-    res = engine.execute(f"SELECT COUNT(*) FROM members WHERE username = '{current_user}'").fetchall()[0][0]
+    res = engine.execute(f"SELECT COUNT(*) FROM members WHERE username = '{message.chat.username}'").fetchall()[0][0]
     if res == 0:
         engine.execute(
-            f'''INSERT INTO members (username, user_id, name, score) VALUES ('{current_user}', '{message.chat.id}', '{message.text}', '{0}');''')
+            f'''INSERT INTO members (username, user_id, name, score) VALUES ('{message.chat.username}', '{message.chat.id}', '{message.text}', '{0}');''')
     bot.send_message(
-        message.chat.id, 'Приятно познакомиться!\nЖалаю удачи!\n\nИ помни, если у тебя возникнут какие-либо воросы, ты всегда можешь обратиться ко мне в личные сообщения.\n\nМой тг: @wirsme', reply_markup=keyboard)
+        message.chat.id, 'Приятно познакомиться!\nЖалаю удачи!\n\nИ помни, если у тебя возникнут какие-либо воросы, ты всегда можешь обратиться ко мне в личные сообщения.\n\nМой тг: @wirsme')
+
+def first_task():
+    bot.send_message(current_user, 'f;vak')
+scheduler.add_job(first_task, 'date', run_date=datetime(2023, 1, 30, 21, 53))
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):
@@ -64,12 +66,6 @@ def callback_worker(call):
         start2_message(call.message)
     if call.data == "yes2":
         register_message(call.message)
-    if call.data == "yes3":
-        scheduler.add_job(prompt(call.message), 'date', run_date=datetime(2023, 1, 8, hour=15, minute=8))
-
-@bot.message_handler(content_types=['text', ])
-def prompt(message):
-    bot.send_message(message.chat.id, 'gyuk')
 
 if __name__ == '__main__':
     try:
